@@ -5,7 +5,8 @@
 
 
 from PyQt5.QtWidgets import QApplication,QMainWindow
-from PyQt5 import QtWidgets
+from PyQt5.QtCore import QThread,QObject,pyqtSignal,QRunnable,pyqtSlot
+from PyQt5 import QtWidgets,QtCore
 import sys
 import datetime
 from time import strftime,localtime
@@ -15,10 +16,11 @@ from convert_txt_to_csv import *
 from time import sleep
 from threading import Thread
 import threading
-
+from warning import *
 #global trigger_auto
 
 class Page1(QMainWindow):
+    setText_example = pyqtSignal()
     def __init__(self):
         super().__init__()
         self.win1 = QMainWindow()
@@ -26,13 +28,49 @@ class Page1(QMainWindow):
         self.page1.setupUi(self.win1)
         self.win1.setFixedHeight(269)
         self.win1.setFixedWidth(722)
+        self.setText_example.connect(self.test)
+        self.wait_val = 1
         self.win1.show()
+        self.display_datetime = None
+        self.display_row = None
+        self.display_column = None
+        self.display_serial = None
 
+        self.page1.Confirm_ignore.clicked.connect(self.delete_duplicate)
+
+    def delete_duplicate(self):
+        ignore_complete()
+        self.setText_example.emit()
+        self.display_datetime = None
+        self.display_row = None
+        self.display_column = None
+        self.display_serial = None 
+        self.page1.Time_duplicate.setText("")
+        self.page1.row_duplicate.setText("")
+        self.page1.column_duplicate.setText("")
+        self.page1.serial_duplicate.setText("")
+        # data = pd.read_csv("debug_copy.csv")
+        # data_save = data.drop(labels=[self.index_dup],axis=0)
+        # data_save.to_csv("debug.csv",index=False)
+
+        self.page1.Confirm_ignore.setEnabled(False)
+        self.wait_val = 0
+
+    @pyqtSlot()
+    def test(self):
+        self.page1.Time_duplicate.setText(self.display_datetime)
+        self.page1.row_duplicate.setText(str(self.display_row))
+        self.page1.column_duplicate.setText(str(self.display_column))
+        self.page1.serial_duplicate.setText(self.display_serial)
+        self.page1.Confirm_ignore.setEnabled(True)
+        # return True
+        
 class BackEnd(QMainWindow):
     def __init__(self):
         super().__init__()
         self.trigger_auto = 0
         self.trigger_check = 0
+        
     
     def relation_csv_to_list(self):
         copy_txt_file()
@@ -43,9 +81,11 @@ class BackEnd(QMainWindow):
         # df = pd.read_csv("debug.csv",names=column_names)
         # test = df.coul
         data = pd.read_csv("debug.csv")
+        # self.copy_data = data.copy()
+        # self.copy_data.to_csv("debug_copy.csv",index=False)
         serial = data['7'].to_list()
         # print(serial)
-        return serial
+        return serial#,self.copy_data
     
 
     def find_duplicates(self,list_serial):
@@ -57,111 +97,197 @@ class BackEnd(QMainWindow):
         unique_duplicates = list(set(duplicates))
         print(unique_duplicates)
 
-
+        #
         indices = []
         for (index,item) in enumerate(list_serial):
             for test in unique_duplicates:
                 if item == test:
                     indices.append(index)
-            
-        print("Result: ",indices)
-        odd_index_list = []
-        for odd_index in indices:
-            if indices.index(odd_index) %2 == 1:
-                odd_index_list.append(odd_index)
-        print("Odd index list: ",odd_index_list)
+        #
 
-        return odd_index_list
+        save_dup = {}
+        max_value = []
+        for i in range (0,len(unique_duplicates)):
+            save_dup['Dup' +str(i)] = []
+        # print(save_dup['Dup1'])
+            for j in range(0,len(list_serial)):
+                # for k in range(0,len(unique_duplicates)):
+                if list_serial[j] == unique_duplicates[i]:
+                    # print("List serial: ",[j])
+                    # print("List unique duplicate: ",[i])
+                    save_dup['Dup'+str(i)].append(j)
+            max_value.append(max(save_dup['Dup' +str(i)]))
+        print("MAX VALUE: ",max_value)
+        # print("Dup1: ",max(save_dup['Dup'+str(0)]))
+        # print("Dup2: ",max(save_dup['Dup'+str(1)]))
+
+        return max_value
+
+
+        # print("Result: ",indices)
+        # odd_index_list = []
+        # for odd_index in indices:
+        #     if indices.index(odd_index) %2 == 1:
+        #         odd_index_list.append(odd_index)
+        # print("Odd index list: ",odd_index_list)
+
+        # return odd_index_list
 
     def display_ui(self,position_duplicate):
-        data = pd.read_csv("debug.csv")
-        display_ui_date = data.iat[5,0] #Hàng 5 cột 0
-        display_ui_time = data.iat[5,1]
-        display_ui_AMPM = data.iat[5,2]
-        display_ui_row = data.iat[5,4]
-        display_ui_column = data.iat[5,6]
-        display_ui_serial = data.iat[5,7]
+        self.data = pd.read_csv("debug.csv")
+
+        display_ui_date = self.data.iat[position_duplicate,0] #Hàng 5 cột 0
+        display_ui_time = self.data.iat[position_duplicate,1]
+        display_ui_AMPM = self.data.iat[position_duplicate,2]
+        display_ui_row = self.data.iat[position_duplicate,4]
+        display_ui_column = self.data.iat[position_duplicate,6]
+        display_ui_serial = self.data.iat[position_duplicate,7]
         
-        #Display UI front-end
-        w.page1.Time_duplicate.setText(display_ui_date + display_ui_time + display_ui_AMPM)
-        # w.page1.row_duplicate.setText(display_ui_row)
-        # w.page1.column_duplicate.setText(display_ui_column)
-        # w.page1.serial_duplicate.setText(display_ui_serial)
-        print("Thoi gian trung: ",display_ui_date + display_ui_time + display_ui_AMPM)
-        print("Hang: ",display_ui_row)
-        print("Cot: ",display_ui_column)
-        print("Serial: ",display_ui_serial)
+        w.display_datetime = str(display_ui_date + display_ui_time + display_ui_AMPM)
+        w.display_row = str(display_ui_row)
+        w.display_column = str(display_ui_column)
+        w.display_serial = str(display_ui_serial)
 
-        w.page1.Confirm_ignore.setEnabled(True)
+        # print("Thoi gian trung: ",display_ui_date + display_ui_time + display_ui_AMPM)
+        # print("Hang: ",display_ui_row)
+        # print("Cot: ",display_ui_column)
+        # print("Serial: ",display_ui_serial)
 
+        
         #Delete index in odd_index_list
-        # data = data.drop(labels=[5],axis=0)
-        # data = data.to_csv("debug2.csv")
-
+        # self.data = self.data.drop(labels=[position_duplicate],axis=0)
+        # self.data = self.data.to_csv("debug.csv")
+        # return display_datetime,display_row,display_column,display_serial
     def Manual_check(self):
         print("MANUAL CHECK")
 
-def check_status_debugfile():
-    try:
-        # print(w.page1.Auto_check_box.checkState())
-        pre_size = 0 #os.stat('debug.txt').st_size
-        while True:
-            if w.page1.Auto_check_box.checkState() == 2:
-                # print(w.page1.Auto_check_box.checkState())
-                file_stat = os.stat('debug.txt')
-                size = file_stat.st_size
-                print("pre_size: ",size)
-                if size - pre_size != 0:
-                    print("Trigger check 1")
-                    run_algorithm.trigger_check = 1
+class Worker2(QObject):
+    finished2 = pyqtSignal()
+    progress2 = pyqtSignal(int)
+    def check_status_debugfile(self):
+        try:
+            # print(w.page1.Auto_check_box.checkState())
+            pre_size = 0 #os.stat('debug.txt').st_size
+            while True:
+                w.page1.manual_check.setEnabled(False)
+                if w.page1.Auto_check_box.checkState() == 2:
+                    # print(w.page1.Auto_check_box.checkState())
+                    file_stat = os.stat('debug.txt')
+                    size = file_stat.st_size
+                    print("pre_size: ",size)
+                    if size - pre_size != 0:
+                        print("Trigger check 1")
+                        run_algorithm.trigger_check = 1
+                    else:
+                        print("Trigger check 0")
+                        run_algorithm.trigger_check = 0     
+                    pre_size = size  
+                    sleep(2)
+
                 else:
-                    print("Trigger check 0")
-                    run_algorithm.trigger_check = 0     
-                pre_size = size  
-                sleep(2)
+                    print(w.page1.Auto_check_box.checkState())
+                    #Enalble button manual check
+                    w.page1.manual_check.setEnabled(True)
+                    w.page1.manual_check.clicked.connect(run_algorithm.Manual_check)
+                sleep(1)
+        except KeyboardInterrupt:
+            exit(0)
 
-            else:
-                print(w.page1.Auto_check_box.checkState())
-                #Enalble button manual check
-                w.page1.manual_check.setEnabled(True)
-                w.page1.manual_check.clicked.connect(run_algorithm.Manual_check)
-            sleep(1)
-    except KeyboardInterrupt:
-        exit(0)
+class Worker1(QObject):
+    finished1 = pyqtSignal()
+    progress1 = pyqtSignal(int)
+    gui_display = pyqtSignal()
+    def __init__(self):
+        super().__init__()
+    def main_thread(self):
+        while True:
+            if run_algorithm.trigger_check == 1:
+                print("Process 1 lan") 
+                serial_number = run_algorithm.relation_csv_to_list()
+                index_duplicate = run_algorithm.find_duplicates(serial_number)
+                data = pd.read_csv("debug.csv")
+                for w.index_dup in index_duplicate:
+                    w.wait_val = 0
+                    run_algorithm.display_ui(w.index_dup)
+                    #Goi data tu main program display
+                    w.setText_example.emit()
+                    #Delete product in csv file
+                    # run_algorithm.data = run_algorithm.data.drop(labels=[index_dup],axis=0)
+                    # run_algorithm.data = run_algorithm.data.to_csv("debug.csv")                 
+                    w.wait_val = 1
+                    while w.wait_val == 1:
+                        # print("Wait to press ignore")
+                        pass
+                #Đợi xác nhận hết rồi Xoa du lieu luon 1 lan
+                for delete_index in index_duplicate:
+                    data = data.drop(labels=[delete_index],axis=0)
+                data.to_csv("debug.csv",index=False)
 
-def main_thread():
-    while True:
-        if run_algorithm.trigger_check == 1:
-            print("Process 1 lan") 
-            serial_number = run_algorithm.relation_csv_to_list()
-            index_duplicate = run_algorithm.find_duplicates(serial_number)
-            run_algorithm.display_ui(index_duplicate)
-            run_algorithm.trigger_check = 0
-            
-        # else:
-        #     print("WAITING PROCESSING")
+                #Xóa trên txt, hoàntất process
+                # a_file = open("debug.txt","r")
+                # lines = a_file.readlines()
+                # a_file.close()
+                # #delete row
+                # del lines[1]
+                # #write to new file
+                # new_file = open("debug.txt","w+")
+                # for line in lines:
+                #     new_file.write(line)
+                # new_file.close()
+                
+                run_algorithm.trigger_check = 0
+
+                
+            # else:
+            #     print("WAITING PROCESSING")
 
 
 if __name__ == '__main__':
     try:
         
         app = QApplication(sys.argv)
+        # w = Page1()
+        # run_algorithm = BackEnd()
+
+        thread1 = QThread()
+        worker_1 = Worker1()
+        worker_1.moveToThread(thread1)
+        
+
+
+        thread2 = QThread()
+        worker_2 = Worker2()
+        worker_2.moveToThread(thread2)
+
         w = Page1()
-        
-        t1 = threading.Thread(target=main_thread,args=())
         run_algorithm = BackEnd()
-        # t3 = threading.Thread(target=check_auto_mode,args=())
-        t2 = threading.Thread(target=check_status_debugfile,args=())
+
+        thread1.started.connect(worker_1.main_thread)
+        worker_1.finished1.connect(thread1.quit)
+        worker_1.finished1.connect(thread1.deleteLater)
+        thread1.finished.connect(thread1.deleteLater)
         
-        t1.start()
+
+        thread2.started.connect(worker_2.check_status_debugfile)
+        worker_2.finished2.connect(thread2.quit)
+        worker_2.finished2.connect(thread2.deleteLater)
+        thread2.finished.connect(thread2.deleteLater)
+
+        thread1.start()
+        thread2.start()
+        # t1 = threading.Thread(target=main_thread,args=())
+        # t2 = threading.Thread(target=check_status_debugfile,args=())
+        
+        # t1.start()
         # t3.start()
-        t2.start()
+        # t2.start()
+        
         
         sys.exit(app.exec())
 
         
     except KeyboardInterrupt:
-        t1.join()
-        t2.join()
+        # t1.join()
+        # t2.join()
         # t3.join()
         print("Error")
