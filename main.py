@@ -117,21 +117,15 @@ class BackEnd(QMainWindow):
                     # print("List unique duplicate: ",[i])
                     save_dup['Dup'+str(i)].append(j)
             max_value.append(max(save_dup['Dup' +str(i)]))
-        print("MAX VALUE: ",max_value)
+        # print("MAX VALUE: ",max_value)
+
         # print("Dup1: ",max(save_dup['Dup'+str(0)]))
         # print("Dup2: ",max(save_dup['Dup'+str(1)]))
 
         return max_value
 
 
-        # print("Result: ",indices)
-        # odd_index_list = []
-        # for odd_index in indices:
-        #     if indices.index(odd_index) %2 == 1:
-        #         odd_index_list.append(odd_index)
-        # print("Odd index list: ",odd_index_list)
 
-        # return odd_index_list
 
     def display_ui(self,position_duplicate):
         self.data = pd.read_csv("debug.csv")
@@ -224,22 +218,22 @@ class Worker1(QObject):
                 data.to_csv("debug.csv",index=False)
 
                 #Xóa trên txt, hoàntất process
-                # a_file = open("debug.txt","r")
-                # lines = a_file.readlines()
-                # a_file.close()
-                # #delete row
-                # del lines[1]
-                # #write to new file
-                # new_file = open("debug.txt","w+")
-                # for line in lines:
-                #     new_file.write(line)
-                # new_file.close()
+                print("INDEX DUPLICATE: ",index_duplicate)
+                a_file = open("debug.txt","r")
+                lines = a_file.readlines()
+                a_file.close()
+                #delete rows
+                for i in range(0,len(index_duplicate)):
+                    del lines[index_duplicate[i]]
+                #write to new file
+                new_file = open("debug.txt","w+")
+                for line in lines:
+                    new_file.write(line)
+                new_file.close()
                 
                 run_algorithm.trigger_check = 0
 
-                
-            # else:
-            #     print("WAITING PROCESSING")
+
 
 
 if __name__ == '__main__':
