@@ -1,6 +1,10 @@
-# Đã check dc thuật toán bắt serial trùng khi file debug thay đổi dung lượng
-# -> xuat ra giao dien GUI
-# Tim cach tao lai thread bằng QTthread
+# Author: On Tu Quoc Dat - Control System Engineer
+# Company : Sonion Viet Nam Co.,Ltd
+# Version : 1.0
+# Update: 01/04/2023
+# Built = Python 3.10.7 
+
+#Special command python -m PyQt5.uic.pyuic -x inteface.ui -o interface.py
 
 
 
@@ -14,8 +18,6 @@ import pandas as pd
 from Interface import Ui_MainWindow
 from convert_txt_to_csv import *
 from time import sleep
-from threading import Thread
-import threading
 from warning import *
 #global trigger_auto
 
