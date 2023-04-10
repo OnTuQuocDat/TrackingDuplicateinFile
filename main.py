@@ -19,6 +19,7 @@ from Interface import Ui_MainWindow
 from convert_txt_to_csv import *
 from time import sleep
 from warning import *
+import shutil
 #global trigger_auto
 
 class Page1(QMainWindow):
@@ -160,15 +161,19 @@ class BackEnd(QMainWindow):
 class Worker2(QObject):
     finished2 = pyqtSignal()
     progress2 = pyqtSignal(int)
+
     def check_status_debugfile(self):
+        src_debug = 'debug.txt'
+        dst_debug = 'debug_process.txt'
         try:
             # print(w.page1.Auto_check_box.checkState())
             pre_size = 0 #os.stat('debug.txt').st_size
             while True:
                 w.page1.manual_check.setEnabled(False)
                 if w.page1.Auto_check_box.checkState() == 2:
+                    shutil.copyfile(src_debug,dst_debug)
                     # print(w.page1.Auto_check_box.checkState())
-                    file_stat = os.stat('debug.txt')
+                    file_stat = os.stat(dst_debug)
                     size = file_stat.st_size
                     print("pre_size: ",size)
                     if size - pre_size != 0:

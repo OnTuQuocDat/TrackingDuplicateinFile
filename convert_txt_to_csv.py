@@ -3,7 +3,7 @@ import shutil
 import os
 
 def copy_txt_file():
-    startfile = r'debug.txt'
+    startfile = r'debug_process.txt'
     endfile = r'debug_copy.txt'
     if os.stat(startfile).st_size != 0:
         shutil.copyfile(startfile,endfile)
