@@ -61,11 +61,13 @@ class Page1(QMainWindow):
 
     @pyqtSlot()
     def test(self):
+        pop_up_warning()
         self.page1.Time_duplicate.setText(self.display_datetime)
         self.page1.row_duplicate.setText(str(self.display_row))
         self.page1.column_duplicate.setText(str(self.display_column))
         self.page1.serial_duplicate.setText(self.display_serial)
         self.page1.Confirm_ignore.setEnabled(True)
+
         # return True
         
 class BackEnd(QMainWindow):
@@ -98,6 +100,8 @@ class BackEnd(QMainWindow):
                 duplicates.append(number) 
         #duplicates = [number for number in list_serial if list_serial.count(number) > 1]
         unique_duplicates = list(set(duplicates))
+        # if len(unique_duplicates) > 0:
+        #     pop_up_warning()
         print(unique_duplicates)
 
         #
@@ -164,16 +168,16 @@ class Worker2(QObject):
 
     def check_status_debugfile(self):
         src_debug = 'debug.txt'
-        dst_debug = 'debug_process.txt'
+        #dst_debug = 'debug_process.txt'
         try:
             # print(w.page1.Auto_check_box.checkState())
             pre_size = 0 #os.stat('debug.txt').st_size
             while True:
                 w.page1.manual_check.setEnabled(False)
                 if w.page1.Auto_check_box.checkState() == 2:
-                    shutil.copyfile(src_debug,dst_debug)
+                    #shutil.copyfile(src_debug,dst_debug)
                     # print(w.page1.Auto_check_box.checkState())
-                    file_stat = os.stat(dst_debug)
+                    file_stat = os.stat(src_debug)
                     size = file_stat.st_size
                     print("pre_size: ",size)
                     if size - pre_size != 0:
@@ -203,6 +207,7 @@ class Worker1(QObject):
     def main_thread(self):
         while True:
             if run_algorithm.trigger_check == 1:
+                #Pop 
                 print("Process 1 lan") 
                 serial_number = run_algorithm.relation_csv_to_list()
                 index_duplicate = run_algorithm.find_duplicates(serial_number)
